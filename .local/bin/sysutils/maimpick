@@ -1,0 +1,58 @@
+#!/bin/sh
+# Arch Requirements: libnotify, maim, xclip, dmenu (dmenu), xdotool
+
+#TODO: check for and append .png on names
+
+ss_path="$WORK_PROJECT_DIR/$WORK_CURRENT_PROJECT/Screenshots/"
+if [ "$WORK_CAPTURE_SCREENSHOTS" == "off" ]; then
+	ss_path="$HOME/Screenshots/"
+fi
+ss_path="$HOME/Pictures/Screenshots/"
+
+function no_name_exit {
+	notify-send -u critical -t 1000 "You failed to provide a valid name/path for your screenshot"
+	exit 1
+}
+
+function selectedarea {
+	if [ -z "$1" ]; then
+		maim -s | xclip -selection clipboard -t image/png
+	else
+		ss_name="$(echo "screenshot-$(date '+%Y%m%d_%H%M%S').png" | dmenu -i -p "Screenshot name?")"
+		[ -z "$ss_name" ] && no_name_exit
+		#TODO: More checks, the above one will never trigger really
+		maim -s "$ss_path/$ss_name"
+	fi
+}
+
+function currentwindow {
+	if [ -z $1 ]; then
+		maim -i "$(xdotool getactivewindow)" | xclip -selection clipboard -t image/png
+	else
+		ss_name="$(echo "screenshot-$(date '+%Y%m%d_%H%M%S').png" | dmenu -i -p "Screenshot name?")"
+		maim -i "$(xdotool getactivewindow)" "$ss_path/$ss_name" 
+	fi
+}
+
+function fullscreen {
+	if [ -z $1 ]; then
+		maim | xclip -selection clipboard -t image/png
+	else
+		ss_name="$(echo "screenshot-$(date '+%Y%m%d_%H%M%S').png" | dmenu -i -p "Screenshot name?")"
+		maim "$ss_path/$ss_name" 
+	fi
+}
+
+function scanQR {
+	maim -s | zbarimg -q --raw - | xclip -selection clipboard
+}
+
+case "$(printf "select area\\ncurrent window\\nfull screen\\nselect area (copy)\\ncurrent window (copy)\\nfull screen (copy)\\nscan QR code" | dmenu -l 6 -i -p "Screenshot which area?")" in
+	"select area") selectedarea "save" ;;
+	"current window") currentwindow "save" ;;
+	"full screen") fullscreen "save" ;;
+	"select area (copy)") selectedarea ;;
+	"current window (copy)") currentwindow ;;
+	"full screen (copy)") fullscreen ;;
+	"scan QR code") scanQR ;;
+esac

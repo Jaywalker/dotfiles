@@ -1,0 +1,57 @@
+#!/bin/sh
+# Arch Requirements: xorg-xwininfo
+
+# Window rules
+# ============
+
+# Operate on windows based on their properties.  The positional
+# arguments are defined in the `external_rules_command` of `man bspc`.
+window_id="$1"
+window_id_hex="0x$(printf '%x' "$window_id")"
+window_class="$2"
+window_instance="$3"
+window_title="$(xwininfo -id "$window_id" | sed ' /^xwininfo/!d ; s,.*"\(.*\)".*,\1,')"
+
+#if [ "$window_class" = "obs" ]; then
+#	case "$window_title" in
+#		"Fullscreen Projector (Program)")
+#			echo "monitor=HDMI-2"
+#		;;
+#		"Audio Mixer"|Stats|Scenes|Sources|Controls)
+#			echo "state=tiled"
+#		#	[ "$window_title" && "Scenes" ] && echo "node=@^1:^1:/1"
+#		#	[ "$window_title" && "AudioMixer" ] && echo "node=@^1:^1:/2/2/1"
+#		#	#[ "$window_title" && "Stats" ] && echo ""
+#		#	#[ "$window_title" && "Sources" ] && echo ""
+#		#	#[ "$window_title" && "Controls" ] && echo ""
+#		#;;
+#		#"Windowed Projector "*)
+#		#	[ "$window_title" && "Windowed Projector (Preview)" ] && echo "node=@^1:^1:/2/1/1"
+#		#	[ "$window_title" && "Windowed Projector (Program)" ] && echo "node=@^1:^1:/2/1/2"
+#		#;;
+#		#"OBS Studio"*)
+#		#	echo "node=@^1:^2:/"
+#		#;;
+#	esac
+#fi
+
+if [ "$window_class" == "Zathura" ] || [ "$window_class" == "Surf" ]; then
+	echo "state=tiled"
+elif [ "$window_class" == "Slack" ]; then
+	echo "$window_title" | grep "Slack call with " >/dev/null && echo "state=tiled"
+elif [ "$window_class" == "zoom" ]; then
+	if [ "$window_title" == "zoom" ]; then
+		# This section adjusts the windows that are notifications to be floating windows (ex. audio device changes, host/co-host changes, etc).
+		echo "state=floating"
+		# Here we use an external script to screenshot, kill, and OCR the text from the window into a notifyd alert
+		~/.local/bin/bspwm_zoom_to_notify "$window_id_hex" &
+	fi
+# Check if the window is mpv
+elif [[ "$class" == "mpv" ]]; then
+	# Check if the window is in floating mode using xprop
+	state=$(xprop -id "$wid" _NET_WM_STATE | grep _NET_WM_STATE_FLOATING)
+	if [[ -n "$state" ]]; then
+		# Apply size and position (e.g., 800x450, centered on a 1920x1080 screen)
+		echo "state=floating rectangle=539x301+7-7"
+	fi
+fi

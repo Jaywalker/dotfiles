@@ -1,0 +1,17 @@
+#!/bin/sh
+# select-primary-desktop ACTION NUM
+#   ACTION = focus | send
+#   NUM    = 1..10
+action="$1"
+num="$2"
+
+if [ "$(bspc query -M | wc -l)" -gt 1 ]; then
+    target="primary:^${num}"   # Nth desktop of the primary monitor
+else
+    target="^${num}"           # Nth desktop of the only monitor
+fi
+
+case "$action" in
+    focus) bspc desktop -f "$target" ;;
+    send)  bspc node -d "$target" ;;
+esac

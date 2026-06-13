@@ -1,0 +1,29 @@
+#!/bin/sh
+# Start once from your X session autostart (NOT from bspwmrc — see note).
+
+externals_connected() {
+    for s in /sys/class/drm/card*-*/status; do
+        [ -e "$s" ] || continue
+        case "$s" in *eDP*) continue ;; esac          # ignore the laptop panel
+        [ "$(cat "$s" 2>/dev/null)" = connected ] && return 0
+    done
+    return 1
+}
+
+apply_layout() {
+    if externals_connected; then
+        "$HOME/.screenlayout/laptop-multimonitor.sh"
+    else
+        "$HOME/.screenlayout/laptop-only.sh"
+    fi
+    #"$HOME/.config/bspwm/monitors.sh"    # re-assign desktops for the new topology
+}
+
+apply_layout    # get it right at login
+
+pending=
+stdbuf -oL udevadm monitor --udev --subsystem-match=drm 2>/dev/null | while read -r _; do
+    [ -n "$pending" ] && kill "$pending" 2>/dev/null
+    { sleep 2; apply_layout; } &
+    pending=$!
+done
