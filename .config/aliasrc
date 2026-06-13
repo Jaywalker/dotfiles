@@ -1,0 +1,20 @@
+#
+# ~/.config/aliasrc
+#
+# Loaded by ~/.bashrc or ~/.config/zsh/.zshrc
+
+alias pbcopy='xclip -selection clipboard'
+alias pbpaste='xclip -selection clipboard -o'
+alias zztop="btop"
+alias neofetch="fastfetch"
+alias gi="git init"
+alias gco="git checkout"
+alias gca="git commit -a"
+alias gst="git status"
+alias gpom="git push origin master"
+alias ifconfig.co="curl -4 ifconfig.co"
+
+# Overrides
+command -v nvim >/dev/null && alias vimdiff="nvim -d"
+command -v nvim >/dev/null && alias vim="nvim"
+
